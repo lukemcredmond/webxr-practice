@@ -139,7 +139,22 @@ class App {
     this.Reticle.visible = false;
     this.xrScene.Scene.add(this.Reticle);
   }
-  Render() {}
+  Render(timestamp:any, frame:any) {
+    const dt = this.xrScene.Clock.getDelta();
+    if (this.playerModel) this.playerModel.update(dt);
+
+    const self = this;
+    
+    if ( frame ) {
+
+        if ( this.hitTestSourceRequested === false ) this.requestHitTestSource( )
+
+        if ( this.hitTestSource ) this.getHitTestResults( frame );
+
+    }
+
+    this.xrScene.Renderer.render( this.xrScene.Scene, this.xrScene.Camera );
+  }
 
   requestHitTestSource() {
     const self = this;
