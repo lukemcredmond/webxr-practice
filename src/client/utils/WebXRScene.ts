@@ -10,12 +10,19 @@ export default class WebXRScene
     public Scene : THREE.Scene
     public Renderer: THREE.WebGLRenderer;
     public Controls: OrbitControls;
+    public raycaster: THREE.Raycaster;
+    public workingMatrix: THREE.Matrix4;
+    public workingVector: THREE.Vector3;
+    public origin: THREE.Vector3;
+    public workingQuaternion: THREE.Quaternion;
 
     constructor(container: HTMLDivElement, rendererParms:any, 
-        sceneItems: THREE.Object3D[], ){
+        sceneItems: THREE.Object3D[], 
+        camera: THREE.PerspectiveCamera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 0.01, 20 )
+        ){
 
         this.Clock = new THREE.Clock();
-        this.Camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 0.01, 20 );
+        this.Camera = camera;
         
         this.Scene = new THREE.Scene();
         this.Renderer = new THREE.WebGLRenderer(rendererParms);
@@ -33,7 +40,11 @@ export default class WebXRScene
         this.Controls.update();
 
       
-
+        this.raycaster = new THREE.Raycaster();
+        this.workingMatrix = new THREE.Matrix4();
+        this.workingVector = new THREE.Vector3();
+        this.workingQuaternion = new THREE.Quaternion();
+        this.origin = new THREE.Vector3();
 
 
         window.addEventListener('resize', this.ResizeHandler.bind(this) );
