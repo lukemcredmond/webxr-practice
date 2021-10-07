@@ -33,7 +33,7 @@ class VRButton {
 
 			} );
 
-			
+			document.body.appendChild( this.button );
 
 		} else {
 
@@ -51,19 +51,24 @@ class VRButton {
 
 			}
 
-			message.style.left = 'calc(50% - 90px)';
-			message.style.width = '180px';
+			message.style.left = '0px';
+			message.style.width = '100%';
 			message.style.textDecoration = 'none';
+
 
 			this.stylizeElement( message );
 
+			message.style.bottom = '0px';
+            message.style.opacity = '1';
+            
+            document.body.appendChild ( message );
+            
+            if (options.vrStatus) options.vrStatus( false );
 			//return message;
 
 		}
     }
-	static createButton( ) {
 	
-	}
 
 	showEnterVR( /*device*/ ) {
 
