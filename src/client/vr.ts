@@ -10,10 +10,6 @@ import { GazeController } from "./utils/GazeController";
 
 class App {
   xrScene: WebXRScene;
-  /* controller1: THREE.Group | undefined;
-  controller2: THREE.Group | undefined;
-  controllerGrip1: THREE.Group | undefined;
-  controllerGrip2: THREE.Group | undefined; */
   currentHandModel: any; //{ left: number; right: number } | undefined;
   handModels: any; //{ left: any; right: any } | undefined;
   hand1: THREE.Group | undefined;
@@ -27,10 +23,17 @@ class App {
   controllers: any;
   immersive: boolean | undefined;
   boardData: any;
-  proxy:any | undefined;
+  proxy: any | undefined;
+  assetsPath: string;
+  loadingBar: LoadingBar | undefined;
+  joystick: JoyStick | undefined;
+
   constructor() {
     const container = document.createElement("div");
     document.body.appendChild(container);
+
+    this.assetsPath = "../assets/waiting_room/";
+
     const rendererParms = { antialias: true };
     const floorGeometry = new THREE.PlaneGeometry(4, 4);
     const floorMaterial = new THREE.MeshStandardMaterial({ color: 0x222222 });
@@ -55,18 +58,17 @@ class App {
       rendererParms,
       sceneItems,
       new THREE.PerspectiveCamera(
-        50,
+        60,
         window.innerWidth / window.innerHeight,
-        0.1,
-        200
+        0.01,
+        500
       )
     );
-    this.xrScene.Camera.position.set(0, 1.6, 3); //cannot be over written
+    this.xrScene.Camera.position.set(0, 1.6, 0); //cannot be over written
 
     this.AddDolly();
-
     this.InitScene();
-    this.SetupXR();
+    
   }
 
   private AddDolly() {
@@ -81,71 +83,87 @@ class App {
 
   InitScene() {
     const self = this;
-
-    // ground
-    const ground = new THREE.Mesh(
-      new THREE.PlaneBufferGeometry(200, 200),
-      new THREE.MeshPhongMaterial({ color: 0x999999, depthWrite: false })
-    );
-    ground.rotation.x = -Math.PI / 2;
-
-    var grid = new THREE.GridHelper(200, 40, 0x000000, 0x000000);
-    (grid.material as any).opacity = 0.2;
-    (grid.material as any).transparent = true;
-    this.xrScene.Scene.add(grid);
-
-    const geometry = new THREE.BoxGeometry(5, 5, 5);
-    const material = new THREE.MeshPhongMaterial({ color: 0xaaaa22 });
-    const edges = new THREE.EdgesGeometry(geometry);
-    const line = new THREE.LineSegments(
-      edges,
-      new THREE.LineBasicMaterial({ color: 0x000000, linewidth: 2 })
-    );
-
-    this.colliders = [];
-
-    self.xrScene.Scene.add(ground);
-    this.proxy = ground;
+    self.loadingBar = new LoadingBar();
+    self.loadScene();
     self.xrScene.Renderer.setAnimationLoop(self.Render.bind(self)); //(timestamp, frame) => { self.render(timestamp, frame); } );
   }
+  loadScene() {
+    const self = this;
+    const loader = new GLTFLoader().setPath(self.assetsPath);
+    loader.load(
+      // resource URL
+      "scene.gltf",
+      // called when the resource is loaded
+      function (gltf) {
+        const room = gltf.scene.children[0];
+        self.xrScene.Scene.add(room);
+        if (self.loadingBar) self.loadingBar.visible = false;
+
+        self.SetupXR();
+      },
+      // called while loading is progressing
+      function (xhr) {
+        if (self.loadingBar)
+          self.loadingBar.progress = xhr.loaded / xhr.total;
+      },
+      // called when loading has errors
+      function (error) {
+        console.log("An error happened");
+      }
+    );
+  }
+
   SetupXR() {
     const self = this;
     self.xrScene.Renderer.xr.enabled = true;
-    const button = new VRButton(this.xrScene.Renderer);
 
-    
+    function vrStatus(available: any) {
+      if (available) {
+        //no idea what this is for
+        const timeoutId = setTimeout(connectionTimeout, 2000);
 
-    //no idea what this is for
-    const timeoutId = setTimeout(connectionTimeout, 2000);
+        function onSelectStart() {
+          self.userData.selectPressed = true;
+        }
 
-    function onSelectStart() {
-      self.userData.selectPressed = true;
+        function onSelectEnd() {
+          self.userData.selectPressed = false;
+        }
+
+        function onConnected(event: any) {
+          clearTimeout(timeoutId);
+        }
+
+        function connectionTimeout() {
+          self.useGaze = true;
+          self.gazeController = new GazeController(
+            self.xrScene.Scene,
+            self.dummyCam
+          );
+        }
+
+        self.controllers = self.buildControllers(self.dolly);
+
+        self.controllers.forEach((controller: any) => {
+          controller.addEventListener("selectstart", onSelectStart);
+          controller.addEventListener("selectend", onSelectEnd);
+          controller.addEventListener("connected", onConnected);
+        });
+      } else {
+        self.joystick = new JoyStick({
+          onMove: self.onMove.bind(self),
+        });
+      }
     }
-
-    function onSelectEnd() {
-      self.userData.selectPressed = false;
-    }
-
-    function onConnected(event: any) {
-      clearTimeout(timeoutId);
-    }
-
-    function connectionTimeout() {
-      self.useGaze = true;
-      self.gazeController = new GazeController(
-        self.xrScene.Scene,
-        self.dummyCam
-      );
-    }
-
-    this.controllers = this.buildControllers(this.dolly);
-
-    this.controllers.forEach((controller: any) => {
-      controller.addEventListener("selectstart", onSelectStart);
-      controller.addEventListener("selectend", onSelectEnd);
-      controller.addEventListener("connected", onConnected);
-    });
+    const button = new VRButton(this.xrScene.Renderer, { vrStatus });
   }
+  onMove(forward: any, turn: any) {
+    if (this.dolly) {
+      this.dolly.userData.forward = forward;
+      this.dolly.userData.turn = -turn;
+    }
+  }
+
   buildControllers(dolly: THREE.Object3D<THREE.Event> | undefined): any {
     const self = this;
     const controllers = [];
@@ -173,7 +191,7 @@ class App {
       }
 
       const handModelFactory = new XRHandModelFactory().setPath(
-        "../../assets/"
+        "../assets/"
       );
       this.handModels = {
         left: null,
@@ -210,7 +228,6 @@ class App {
         });
       }
     }
-
     return controllers;
   }
   cycleHandModel(hand: any) {
@@ -292,7 +309,6 @@ class App {
     //Restore the original rotation
     this.dolly.quaternion.copy(quaternion);
   }
-  
 
   get selectPressed() {
     return (
@@ -306,19 +322,16 @@ class App {
     const dt = this.xrScene.Clock.getDelta();
     if (this.xrScene.Renderer.xr.isPresenting) {
       let moveGaze = false;
-      if(this.dolly)
-      {
+      if (this.dolly) {
         if (this.useGaze && this.gazeController !== undefined) {
           this.gazeController.update();
           moveGaze = this.gazeController.mode == GazeController.Modes.MOVE;
         }
-  
+
         if (this.selectPressed || moveGaze) {
           this.moveDolly(dt);
-          
         }
       }
-      
     }
 
     if (this.immersive != this.xrScene.Renderer.xr.isPresenting) {

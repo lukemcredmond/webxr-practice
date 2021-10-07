@@ -15,6 +15,7 @@ export default class WebXRScene
     public workingVector: THREE.Vector3;
     public origin: THREE.Vector3;
     public workingQuaternion: THREE.Quaternion;
+    public up: THREE.Vector3;
 
     constructor(container: HTMLDivElement, rendererParms:any, 
         sceneItems: THREE.Object3D[], 
@@ -39,7 +40,7 @@ export default class WebXRScene
         this.Controls.target.set(0, 3.5, 0);
         this.Controls.update();
 
-      
+        this.up = new THREE.Vector3(0,1,0);
         this.raycaster = new THREE.Raycaster();
         this.workingMatrix = new THREE.Matrix4();
         this.workingVector = new THREE.Vector3();
