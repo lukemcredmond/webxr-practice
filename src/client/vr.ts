@@ -111,11 +111,9 @@ class App {
   SetupXR() {
     const self = this;
     self.xrScene.Renderer.xr.enabled = true;
-    const button = new VRButton(this.xrScene.Renderer, {
-      sessionInit: {
-        optionalFeatures: ["local-floor", "bounded-floor", "hand-tracking"],
-      },
-    });
+    const button = new VRButton(this.xrScene.Renderer);
+
+    
 
     //no idea what this is for
     const timeoutId = setTimeout(connectionTimeout, 2000);
