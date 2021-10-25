@@ -12,6 +12,7 @@ import {
   fetchProfile,
   MotionController,
 } from "@webxr-input-profiles/motion-controllers/dist/motion-controllers.module.js";
+import { CanvasUI } from "./utils/CanvasUI";
 
 const DEFAULT_PROFILES_PATH =
   "https://cdn.jsdelivr.net/npm/@webxr-input-profiles/assets@1.0/dist/profiles";
@@ -39,6 +40,8 @@ class App {
   buttonStates: any = {};
   room: THREE.Object3D<THREE.Event> | undefined;
   elapsedTime: any | undefined;
+  strStates: string| undefined;
+  ui: any;
 
   constructor() {
     const container = document.createElement("div");
@@ -78,9 +81,8 @@ class App {
     );
     this.xrScene.Camera.position.set(0, 1.6, 0); //cannot be over written
 
-
-    const axesHelper = new THREE.AxesHelper( 5 );
-    this.xrScene.Scene.add( axesHelper );
+    const axesHelper = new THREE.AxesHelper(5);
+    this.xrScene.Scene.add(axesHelper);
 
     this.AddDolly();
     this.InitScene();
@@ -207,6 +209,21 @@ class App {
       }
     }
     const button = new VRButton(this.xrScene.Renderer, { vrStatus });
+    this.ui = this.createUI();
+  }
+  createUI(): any {
+    const self = this;
+    const config = {
+      panelSize: { height: 0.5 },
+      height: 256,
+      body: { type: "text",fontSize: 20 },
+    };
+    const ui = new CanvasUI({ body: "" }, config);
+    ui.mesh.position.set(0, 1.5, -1);
+    if(self.dolly)
+      self.dolly.add(ui.mesh); 
+    //this.xrScene.Scene.add(ui.mesh);
+    return ui;
   }
   updateController(info: any, controller: any) {
     const self = this;
@@ -250,10 +267,9 @@ class App {
 
   //{"trigger":{"button":0},"touchpad":{"button":2,"xAxis":0,"yAxis":1}},"squeeze":{"button":1},"thumbstick":{"button":3,"xAxis":2,"yAxis":3},"button":{"button":6}}}
 
-//this.buttonStates[handname][key].xAxis = gamepad.axes[xAxisIndex].toFixed(2);
-//this.buttonStates["right"][]
-//this.buttonStates[handname][key].yAxis =gamepad.axes[yAxisIndex].toFixed(2);
-
+  //this.buttonStates[handname][key].xAxis = gamepad.axes[xAxisIndex].toFixed(2);
+  //this.buttonStates["right"][]
+  //this.buttonStates[handname][key].yAxis =gamepad.axes[yAxisIndex].toFixed(2);
 
   handleController(controllers: any) {
     if (this.proxy === undefined) return;
@@ -268,15 +284,12 @@ class App {
     let zdir = 0;
     let xdir = 0;
 
-
     Object.keys(this.buttonStates["right"]).forEach((key) => {
       if (key.indexOf("touchpad") != -1 || key.indexOf("thumbstick") != -1) {
         xdir = this.buttonStates["right"]["xAxis"];
         zdir = this.buttonStates["right"]["yAxis"];
-      } 
+      }
     });
-
-
 
     let pos = this.dolly.position.clone();
     pos.y += 1;
@@ -383,6 +396,15 @@ class App {
         }
       }
       //console.log(this.buttonStates);
+      this.updateUI();
+    }
+  }
+  updateUI() {
+    const str = JSON.stringify(this.buttonStates);
+    if (this.strStates === undefined || str != this.strStates) {
+      this.ui.updateElement("body", str);
+      this.ui.update();
+      this.strStates = str;
     }
   }
   createButtonStates(components: any, hand: string) {
