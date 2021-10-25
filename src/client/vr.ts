@@ -7,7 +7,15 @@ import { XRHandModelFactory } from "three/examples/jsm/webxr/XRHandModelFactory"
 import WebXRScene from "./utils/WebXRScene";
 import { VRButton } from "./utils/VRButton";
 import { GazeController } from "./utils/GazeController";
+import {
+  Constants as MotionControllerConstants,
+  fetchProfile,
+  MotionController,
+} from "@webxr-input-profiles/motion-controllers/dist/motion-controllers.module.js";
 
+const DEFAULT_PROFILES_PATH =
+  "https://cdn.jsdelivr.net/npm/@webxr-input-profiles/assets@1.0/dist/profiles";
+const DEFAULT_PROFILE = "generic-trigger";
 class App {
   xrScene: WebXRScene;
   currentHandModel: any; //{ left: number; right: number } | undefined;
@@ -27,6 +35,10 @@ class App {
   assetsPath: string;
   loadingBar: LoadingBar | undefined;
   joystick: JoyStick | undefined;
+  gamepadIndices: any = {};
+  buttonStates: any = {};
+  room: THREE.Object3D<THREE.Event> | undefined;
+  elapsedTime: any | undefined;
 
   constructor() {
     const container = document.createElement("div");
@@ -66,9 +78,12 @@ class App {
     );
     this.xrScene.Camera.position.set(0, 1.6, 0); //cannot be over written
 
+
+    const axesHelper = new THREE.AxesHelper( 5 );
+    this.xrScene.Scene.add( axesHelper );
+
     this.AddDolly();
     this.InitScene();
-    
   }
 
   private AddDolly() {
@@ -95,16 +110,15 @@ class App {
       "scene.gltf",
       // called when the resource is loaded
       function (gltf) {
-        const room = gltf.scene.children[0];
-        self.xrScene.Scene.add(room);
+        self.room = gltf.scene.children[0];
+        self.xrScene.Scene.add(self.room);
         if (self.loadingBar) self.loadingBar.visible = false;
 
         self.SetupXR();
       },
       // called while loading is progressing
       function (xhr) {
-        if (self.loadingBar)
-          self.loadingBar.progress = xhr.loaded / xhr.total;
+        if (self.loadingBar) self.loadingBar.progress = xhr.loaded / xhr.total;
       },
       // called when loading has errors
       function (error) {
@@ -119,19 +133,52 @@ class App {
 
     function vrStatus(available: any) {
       if (available) {
-        //no idea what this is for
+        //if cannot connect to controllers init Gaze controller
         const timeoutId = setTimeout(connectionTimeout, 2000);
 
-        function onSelectStart() {
-          self.userData.selectPressed = true;
-        }
-
-        function onSelectEnd() {
-          self.userData.selectPressed = false;
-        }
-
-        function onConnected(event: any) {
+        function onConnected(event: any, controller: any) {
           clearTimeout(timeoutId);
+          const info = {
+            name: "",
+            targetRayMode: "",
+          };
+          fetchProfile(event.data, DEFAULT_PROFILES_PATH, DEFAULT_PROFILE).then(
+            ({ profile, assetPath }: any) => {
+              console.log(JSON.stringify(profile));
+
+              info.name = profile.profileId;
+              info.targetRayMode = event.data.targetRayMode;
+
+              //Object.entries(profile.layouts).forEach(([key, layout]: any) => {
+              const key = controller.handname;
+              const layout = profile.layouts[key];
+              const components = {};
+              Object.values(layout.components).forEach((component: any) => {
+                (components as any)[component.rootNodeName] =
+                  component.gamepadIndices;
+              });
+              (info as any)[key] = components;
+              self.createButtonStates((info as any)[key], key);
+              //});
+
+              console.log(JSON.stringify(info));
+
+              self.updateController(info, controller);
+            }
+          );
+        }
+        function onDisconnected(obj: any) {
+          const controller = obj.controller;
+          const grip = obj.grip;
+          const index = controller.userData.index;
+          console.log(`Disconnected controller ${index}`);
+          if (obj.controller) {
+            while (controller.children.length > 0)
+              controller.remove(controller.children[0]);
+            self.dolly?.remove(controller);
+          }
+
+          if (obj.grip) self.dolly?.remove(grip);
         }
 
         function connectionTimeout() {
@@ -144,10 +191,14 @@ class App {
 
         self.controllers = self.buildControllers(self.dolly);
 
-        self.controllers.forEach((controller: any) => {
-          controller.addEventListener("selectstart", onSelectStart);
-          controller.addEventListener("selectend", onSelectEnd);
-          controller.addEventListener("connected", onConnected);
+        self.controllers.forEach((obj: any) => {
+          const controller = obj.controller;
+          controller.addEventListener("connected", (event: any) => {
+            onConnected(event, controller);
+          });
+          controller.addEventListener("disconnected", () => {
+            onDisconnected(obj);
+          });
         });
       } else {
         self.joystick = new JoyStick({
@@ -156,6 +207,197 @@ class App {
       }
     }
     const button = new VRButton(this.xrScene.Renderer, { vrStatus });
+  }
+  updateController(info: any, controller: any) {
+    const self = this;
+
+    let trigger = false,
+      squeeze = false;
+    Object.keys(info[controller.handname]).forEach((key) => {
+      if (key.indexOf("trigger") != -1) trigger = true;
+      if (key.indexOf("squeeze") != -1) squeeze = true;
+    });
+
+    if (trigger) {
+      controller.addEventListener("selectstart", () => {
+        controller.userData.selectPressed = true;
+      });
+      controller.addEventListener("selectend", () => {
+        controller.children[0].scale.z = 0;
+        controller.userData.selectPressed = false;
+        controller.userData.selected = undefined;
+      });
+    }
+    if (squeeze) {
+      controller.addEventListener("squeezestart", () => {
+        controller.userData.squeezePressed = true;
+        if (controller.userData.selected !== undefined) {
+          controller.attach(controller.userData.selected);
+          controller.userData.attachedObject = controller.userData.selected;
+        }
+      });
+      controller.addEventListener("squeezeend", () => {
+        controller.userData.squeezePressed = false;
+        if (controller.userData.attachedObject !== undefined) {
+          if (self.room) self.room.attach(this.userData.attachedObject);
+          controller.userData.attachedObject = undefined;
+        }
+      });
+    }
+
+    //self.controllers.forEach((obj: any) => {});
+  }
+
+  //{"trigger":{"button":0},"touchpad":{"button":2,"xAxis":0,"yAxis":1}},"squeeze":{"button":1},"thumbstick":{"button":3,"xAxis":2,"yAxis":3},"button":{"button":6}}}
+
+//this.buttonStates[handname][key].xAxis = gamepad.axes[xAxisIndex].toFixed(2);
+//this.buttonStates["right"][]
+//this.buttonStates[handname][key].yAxis =gamepad.axes[yAxisIndex].toFixed(2);
+
+
+  handleController(controllers: any) {
+    if (this.proxy === undefined) return;
+    if (this.dolly === undefined) return;
+    if (this.dummyCam === undefined) return;
+    if (this.xrScene.workingQuaternion === undefined) return;
+    if (this.xrScene.raycaster === undefined) return;
+
+    const wallLimit = 1.3;
+    const speed = 2;
+
+    let zdir = 0;
+    let xdir = 0;
+
+
+    Object.keys(this.buttonStates["right"]).forEach((key) => {
+      if (key.indexOf("touchpad") != -1 || key.indexOf("thumbstick") != -1) {
+        xdir = this.buttonStates["right"]["xAxis"];
+        zdir = this.buttonStates["right"]["yAxis"];
+      } 
+    });
+
+
+
+    let pos = this.dolly.position.clone();
+    pos.y += 1;
+
+    let dir = new THREE.Vector3();
+    //Store original dolly rotation
+    const quaternion = this.dolly.quaternion.clone();
+    //Get rotation for movement from the headset pose
+    this.dolly.quaternion.copy(
+      this.dummyCam.getWorldQuaternion(this.xrScene.workingQuaternion)
+    );
+    this.dolly.getWorldDirection(dir);
+    dir.negate();
+    this.xrScene.raycaster.set(pos, dir);
+
+    let blocked = false;
+
+    let intersect = this.xrScene.raycaster.intersectObject(this.proxy);
+    if (intersect.length > 0) {
+      if (intersect[0].distance < wallLimit) blocked = true;
+    }
+
+    if (!blocked) {
+      this.dolly.translateZ(zdir * speed);
+      this.dolly.translateX(xdir * speed);
+      pos = this.dolly.getWorldPosition(this.xrScene.origin);
+    }
+
+    //cast left
+    dir.set(-1, 0, 0);
+    dir.applyMatrix4(this.dolly.matrix);
+    dir.normalize();
+    this.xrScene.raycaster.set(pos, dir);
+
+    intersect = this.xrScene.raycaster.intersectObject(this.proxy);
+    if (intersect.length > 0) {
+      if (intersect[0].distance < wallLimit)
+        this.dolly.translateX(wallLimit - intersect[0].distance);
+    }
+
+    //cast right
+    dir.set(1, 0, 0);
+    dir.applyMatrix4(this.dolly.matrix);
+    dir.normalize();
+    this.xrScene.raycaster.set(pos, dir);
+
+    intersect = this.xrScene.raycaster.intersectObject(this.proxy);
+    if (intersect.length > 0) {
+      if (intersect[0].distance < wallLimit)
+        this.dolly.translateX(intersect[0].distance - wallLimit);
+    }
+
+    //cast down
+    dir.set(0, -1, 0);
+    pos.y += 1.5;
+    this.xrScene.raycaster.set(pos, dir);
+
+    intersect = this.xrScene.raycaster.intersectObject(this.proxy);
+    if (intersect.length > 0) {
+      this.dolly.position.copy(intersect[0].point);
+    }
+
+    //Restore the original rotation
+    this.dolly.quaternion.copy(quaternion);
+  }
+  updateGamepadState() {
+    const session = this.xrScene.Renderer.xr.getSession();
+    if (session) {
+      for (let i = 0; i <= 1; i++) {
+        const inputSource = session.inputSources[i];
+        const handname = i == 0 ? "right" : "left";
+        if (
+          inputSource &&
+          inputSource.gamepad &&
+          this.gamepadIndices &&
+          this.buttonStates
+        ) {
+          const gamepad = inputSource.gamepad;
+          try {
+            Object.entries(this.buttonStates[handname]).forEach(
+              ([key, value]) => {
+                const buttonIndex = this.gamepadIndices[handname][key].button;
+                if (
+                  key.indexOf("touchpad") != -1 ||
+                  key.indexOf("thumbstick") != -1
+                ) {
+                  const xAxisIndex = this.gamepadIndices[key].xAxis;
+                  const yAxisIndex = this.gamepadIndices[key].yAxis;
+                  this.buttonStates[handname][key].button =
+                    gamepad.buttons[buttonIndex].value;
+                  this.buttonStates[handname][key].xAxis =
+                    gamepad.axes[xAxisIndex].toFixed(2);
+                  this.buttonStates[handname][key].yAxis =
+                    gamepad.axes[yAxisIndex].toFixed(2);
+                } else {
+                  this.buttonStates[handname][key] =
+                    gamepad.buttons[buttonIndex].value;
+                }
+              }
+            );
+          } catch (e) {
+            console.warn("An error occurred setting the ui");
+          }
+        }
+      }
+      //console.log(this.buttonStates);
+    }
+  }
+  createButtonStates(components: any, hand: string) {
+    const buttonStates = {};
+    this.gamepadIndices[hand] = components;
+
+    Object.keys(components).forEach((key) => {
+      if (key.indexOf("touchpad") != -1 || key.indexOf("thumbstick") != -1) {
+        (buttonStates as any)[key] = { button: 0, xAxis: 0, yAxis: 0 };
+      } else {
+        (buttonStates as any)[key] = 0;
+      }
+    });
+
+    this.buttonStates[hand] = buttonStates;
   }
   onMove(forward: any, turn: any) {
     if (this.dolly) {
@@ -180,19 +422,20 @@ class App {
 
       for (let i = 0; i <= 1; i++) {
         const controller = self.xrScene.Renderer.xr.getController(i);
+        (controller as any).handname = i == 0 ? "right" : "left";
         controller.add(line.clone());
+        controller.userData.index = i;
         controller.userData.selectPressed = false;
+        controller.userData.squeezePressed = false;
         dolly.add(controller);
-        controllers.push(controller);
 
         const grip = self.xrScene.Renderer.xr.getControllerGrip(i);
         grip.add(controllerModelFactory.createControllerModel(grip));
         dolly.add(grip);
+        controllers.push({ controller, grip });
       }
 
-      const handModelFactory = new XRHandModelFactory().setPath(
-        "../assets/"
-      );
+      const handModelFactory = new XRHandModelFactory().setPath("../assets/");
       this.handModels = {
         left: null,
         right: null,
@@ -313,23 +556,33 @@ class App {
   get selectPressed() {
     return (
       this.controllers !== undefined &&
-      (this.controllers[0].userData.selectPressed ||
-        this.controllers[1].userData.selectPressed)
+      (this.controllers[0].controller.userData.selectPressed ||
+        this.controllers[1].controller.userData.selectPressed)
     );
   }
 
   Render(timestamp: any, frame: any) {
     const dt = this.xrScene.Clock.getDelta();
+    const self = this;
     if (this.xrScene.Renderer.xr.isPresenting) {
       let moveGaze = false;
       if (this.dolly) {
         if (this.useGaze && this.gazeController !== undefined) {
           this.gazeController.update();
           moveGaze = this.gazeController.mode == GazeController.Modes.MOVE;
+          if (moveGaze) {
+            this.moveDolly(dt);
+          }
+        }
+        if (this.controllers) {
+          self.handleController(this.controllers);
         }
 
-        if (this.selectPressed || moveGaze) {
-          this.moveDolly(dt);
+        if (this.elapsedTime === undefined) this.elapsedTime = 0;
+        this.elapsedTime += dt;
+        if (this.elapsedTime > 0.3) {
+          this.updateGamepadState();
+          this.elapsedTime = 0;
         }
       }
     }
