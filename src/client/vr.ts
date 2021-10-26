@@ -372,26 +372,20 @@ class App {
             Object.entries(this.buttonStates[handname]).forEach(
               ([key, value]) => {
                 const buttonIndex = this.gamepadIndices[handname][key].button;
-                if (
-                  key.indexOf("touchpad") != -1 ||
-                  key.indexOf("thumbstick") != -1
-                ) {
-                  const xAxisIndex = this.gamepadIndices[key].xAxis;
-                  const yAxisIndex = this.gamepadIndices[key].yAxis;
-                  this.buttonStates[handname][key].button =
-                    gamepad.buttons[buttonIndex].value;
-                  this.buttonStates[handname][key].xAxis =
-                    gamepad.axes[xAxisIndex].toFixed(2);
-                  this.buttonStates[handname][key].yAxis =
-                    gamepad.axes[yAxisIndex].toFixed(2);
+                if (key.indexOf("touchpad") != -1 ||key.indexOf("thumbstick") != -1) {
+                  const xAxisIndex = this.gamepadIndices[handname][key].xAxis;
+                  const yAxisIndex = this.gamepadIndices[handname][key].yAxis;
+                  this.buttonStates[handname][key].button = gamepad.buttons[buttonIndex].value;
+                  this.buttonStates[handname][key].xAxis = gamepad.axes[xAxisIndex].toFixed(2);
+                  this.buttonStates[handname][key].yAxis = gamepad.axes[yAxisIndex].toFixed(2);
                 } else {
-                  this.buttonStates[handname][key] =
-                    gamepad.buttons[buttonIndex].value;
+                  this.buttonStates[handname][key] = gamepad.buttons[buttonIndex].value;
                 }
               }
             );
           } catch (e) {
-            console.warn("An error occurred setting the ui");
+            //console.warn("An error occurred setting the ui");
+            console.log(e);
           }
         }
       }
@@ -596,9 +590,7 @@ class App {
             this.moveDolly(dt);
           }
         }
-        if (this.controllers) {
-          self.handleController(this.controllers);
-        }
+        
 
         if (this.elapsedTime === undefined) this.elapsedTime = 0;
         this.elapsedTime += dt;
@@ -606,6 +598,11 @@ class App {
           this.updateGamepadState();
           this.elapsedTime = 0;
         }
+
+        if (this.controllers) {
+          self.handleController(this.controllers);
+        }
+
       }
     }
 
