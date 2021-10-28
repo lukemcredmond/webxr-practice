@@ -285,6 +285,9 @@ class App {
   rotateCamera(dx: any, dy: any) {
     if (this === undefined) return;
     if (this.dolly === undefined) return;
+
+    let cleanx = parseFloat(dx);
+    let cleany = parseFloat(dy);
     //store previous x rotation
     var x = this.dolly.rotation.x;
 
@@ -292,11 +295,11 @@ class App {
     this.dolly.rotateX(-x);
 
     //rotate camera on y axis
-    this.dolly.rotateY(dy);
+    this.dolly.rotateY(cleany);
 
     //check if we are trying to look to high or too low
-    if (Math.abs(dx + x) > Math.PI / 2 - 0.05) this.dolly.rotateX(x);
-    else this.dolly.rotateX(x + dx);
+    if (Math.abs(cleanx + x) > Math.PI / 2 - 0.05) this.dolly.rotateX(x);
+    else this.dolly.rotateX(x + cleanx);
 
     //reset z rotation. Floating point operations might change z rotation during the above operations.
     this.dolly.rotation.z = 0;
@@ -329,12 +332,10 @@ class App {
 
     Object.keys(this.buttonStates["right"]).forEach((key) => {
       if (key.indexOf("touchpad") != -1 || key.indexOf("thumbstick") != -1) {
-        lookside = this.buttonStates["left"][key]["xAxis"];
-        lookup = this.buttonStates["left"][key]["yAxis"];
+        lookside = this.buttonStates["right"][key]["xAxis"];
+        lookup = this.buttonStates["right"][key]["yAxis"];
       }
     });
-
-
     this.rotateCamera(lookside,lookup);
 
     let pos = this.dolly.position.clone();
