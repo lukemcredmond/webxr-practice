@@ -92,7 +92,7 @@ class App {
 
   private AddDolly() {
     this.dolly = new THREE.Object3D();
-    this.dolly.position.set(0, 0, 10);
+    this.dolly.position.set(0, 1, 10);
     this.dolly.add(this.xrScene.Camera);
     this.dummyCam = new THREE.Object3D();
 
@@ -281,20 +281,44 @@ class App {
   //this.buttonStates["right"][]
   //this.buttonStates[handname][key].yAxis =gamepad.axes[yAxisIndex].toFixed(2);
 
+  // Rotate camera Fps style
+  rotateCamera(dx: any, dy: any) {
+    if (this === undefined) return;
+    if (this.dolly === undefined) return;
+    //store previous x rotation
+    var x = this.dolly.rotation.x;
+
+    //reset camera's x rotation.
+    this.dolly.rotateX(-x);
+
+    //rotate camera on y axis
+    this.dolly.rotateY(dy);
+
+    //check if we are trying to look to high or too low
+    if (Math.abs(dx + x) > Math.PI / 2 - 0.05) this.dolly.rotateX(x);
+    else this.dolly.rotateX(x + dx);
+
+    //reset z rotation. Floating point operations might change z rotation during the above operations.
+    this.dolly.rotation.z = 0;
+  }
+
   handleController(controllers: any) {
     if (this.proxy === undefined) return;
     if (this.dolly === undefined) return;
     if (this.dummyCam === undefined) return;
     if (this.xrScene.workingQuaternion === undefined) return;
     if (this.xrScene.raycaster === undefined) return;
-    if (this.buttonStates === undefined)return;
-    if(this.buttonStates["left"]=== undefined)return;
+    if (this.buttonStates === undefined) return;
+    if (this.buttonStates["left"] === undefined) return;
 
     const wallLimit = 1.3;
-    const speed = 2;
+    const speed = 1;
 
     let zdir = 0;
     let xdir = 0;
+
+    let lookside = 0;
+    let lookup = 0;
 
     Object.keys(this.buttonStates["left"]).forEach((key) => {
       if (key.indexOf("touchpad") != -1 || key.indexOf("thumbstick") != -1) {
@@ -302,6 +326,16 @@ class App {
         zdir = this.buttonStates["left"][key]["yAxis"];
       }
     });
+
+    Object.keys(this.buttonStates["right"]).forEach((key) => {
+      if (key.indexOf("touchpad") != -1 || key.indexOf("thumbstick") != -1) {
+        lookside = this.buttonStates["left"][key]["xAxis"];
+        lookup = this.buttonStates["left"][key]["yAxis"];
+      }
+    });
+
+
+    this.rotateCamera(lookside,lookup);
 
     let pos = this.dolly.position.clone();
     pos.y += 1;
