@@ -40,11 +40,13 @@ class App {
   buttonStates: any = {};
   room: THREE.Object3D<THREE.Event> | undefined;
   elapsedTime: any | undefined;
-  strStates: string| undefined;
+  strStates: string | undefined;
   ui: any;
+  CanvasMessage: string;
 
   constructor() {
     const container = document.createElement("div");
+    this.CanvasMessage = "";
     document.body.appendChild(container);
 
     this.assetsPath = "../assets/waiting_room/";
@@ -113,6 +115,15 @@ class App {
       // called when the resource is loaded
       function (gltf) {
         self.room = gltf.scene.children[0];
+
+        self.room.traverse(function (child: any) {
+          if (child.isMesh) {
+            console.log(child.name);
+          }
+        });
+
+        self.proxy = self.room;
+
         self.xrScene.Scene.add(self.room);
         if (self.loadingBar) self.loadingBar.visible = false;
 
@@ -203,9 +214,9 @@ class App {
           });
         });
       } else {
-        self.joystick = new JoyStick({
-          onMove: self.onMove.bind(self),
-        });
+        // self.joystick = new JoyStick({
+        //   onMove: self.onMove.bind(self),
+        // });
       }
     }
     const button = new VRButton(this.xrScene.Renderer, { vrStatus });
@@ -216,12 +227,11 @@ class App {
     const config = {
       panelSize: { height: 0.5 },
       height: 256,
-      body: { type: "text",fontSize: 20 },
+      body: { type: "text", fontSize: 20 },
     };
     const ui = new CanvasUI({ body: "" }, config);
     ui.mesh.position.set(0, 1.5, -1);
-    if(self.dolly)
-      self.dolly.add(ui.mesh); 
+    if (self.dolly) self.dolly.add(ui.mesh);
     //this.xrScene.Scene.add(ui.mesh);
     return ui;
   }
@@ -277,6 +287,8 @@ class App {
     if (this.dummyCam === undefined) return;
     if (this.xrScene.workingQuaternion === undefined) return;
     if (this.xrScene.raycaster === undefined) return;
+    if (this.buttonStates === undefined)return;
+    if(this.buttonStates["left"]=== undefined)return;
 
     const wallLimit = 1.3;
     const speed = 2;
@@ -284,10 +296,10 @@ class App {
     let zdir = 0;
     let xdir = 0;
 
-    Object.keys(this.buttonStates["right"]).forEach((key) => {
+    Object.keys(this.buttonStates["left"]).forEach((key) => {
       if (key.indexOf("touchpad") != -1 || key.indexOf("thumbstick") != -1) {
-        xdir = this.buttonStates["right"]["xAxis"];
-        zdir = this.buttonStates["right"]["yAxis"];
+        xdir = this.buttonStates["left"][key]["xAxis"];
+        zdir = this.buttonStates["left"][key]["yAxis"];
       }
     });
 
@@ -317,6 +329,9 @@ class App {
       this.dolly.translateX(xdir * speed);
       pos = this.dolly.getWorldPosition(this.xrScene.origin);
     }
+
+    this.CanvasMessage =
+      (blocked ? "blocked" : "not blocked") + " zdir=" + zdir + " xdir=" + xdir;
 
     //cast left
     dir.set(-1, 0, 0);
@@ -360,7 +375,7 @@ class App {
     if (session) {
       for (let i = 0; i <= 1; i++) {
         const inputSource = session.inputSources[i];
-        const handname = i == 0 ? "right" : "left";
+        const handname = i == 0 ? "left" : "right";
         if (
           inputSource &&
           inputSource.gamepad &&
@@ -372,14 +387,21 @@ class App {
             Object.entries(this.buttonStates[handname]).forEach(
               ([key, value]) => {
                 const buttonIndex = this.gamepadIndices[handname][key].button;
-                if (key.indexOf("touchpad") != -1 ||key.indexOf("thumbstick") != -1) {
+                if (
+                  key.indexOf("touchpad") != -1 ||
+                  key.indexOf("thumbstick") != -1
+                ) {
                   const xAxisIndex = this.gamepadIndices[handname][key].xAxis;
                   const yAxisIndex = this.gamepadIndices[handname][key].yAxis;
-                  this.buttonStates[handname][key].button = gamepad.buttons[buttonIndex].value;
-                  this.buttonStates[handname][key].xAxis = gamepad.axes[xAxisIndex].toFixed(2);
-                  this.buttonStates[handname][key].yAxis = gamepad.axes[yAxisIndex].toFixed(2);
+                  this.buttonStates[handname][key].button =
+                    gamepad.buttons[buttonIndex].value;
+                  this.buttonStates[handname][key].xAxis =
+                    gamepad.axes[xAxisIndex].toFixed(2);
+                  this.buttonStates[handname][key].yAxis =
+                    gamepad.axes[yAxisIndex].toFixed(2);
                 } else {
-                  this.buttonStates[handname][key] = gamepad.buttons[buttonIndex].value;
+                  this.buttonStates[handname][key] =
+                    gamepad.buttons[buttonIndex].value;
                 }
               }
             );
@@ -395,10 +417,11 @@ class App {
   }
   updateUI() {
     const str = JSON.stringify(this.buttonStates);
+    const message = JSON.stringify(this.CanvasMessage);
     if (this.strStates === undefined || str != this.strStates) {
       this.ui.updateElement("body", str);
       this.ui.update();
-      this.strStates = str;
+      this.strStates = str + message;
     }
   }
   createButtonStates(components: any, hand: string) {
@@ -590,7 +613,6 @@ class App {
             this.moveDolly(dt);
           }
         }
-        
 
         if (this.elapsedTime === undefined) this.elapsedTime = 0;
         this.elapsedTime += dt;
@@ -602,7 +624,6 @@ class App {
         if (this.controllers) {
           self.handleController(this.controllers);
         }
-
       }
     }
 
