@@ -163,6 +163,7 @@ class App {
               info.targetRayMode = event.data.targetRayMode;
 
               //Object.entries(profile.layouts).forEach(([key, layout]: any) => {
+              controller.handname = event.data.handedness;
               const key = controller.handname;
               const layout = profile.layouts[key];
               const components = {};
@@ -336,7 +337,7 @@ class App {
         lookup = parseFloat(this.buttonStates["right"][key]["yAxis"]);
       }
     });
-    this.rotateCamera(lookside,lookup);
+    this.rotateCamera(lookside, lookup);
 
     let pos = this.dolly.position.clone();
     pos.y += 1;
@@ -410,7 +411,9 @@ class App {
     if (session) {
       for (let i = 0; i <= 1; i++) {
         const inputSource = session.inputSources[i];
-        const handname = i == 0 ? "left" : "right";
+        //console.log("-------------------------------------------");
+        //console.log(inputSource);
+        const handname = inputSource.handedness;
         if (
           inputSource &&
           inputSource.gamepad &&
@@ -496,7 +499,7 @@ class App {
 
       for (let i = 0; i <= 1; i++) {
         const controller = self.xrScene.Renderer.xr.getController(i);
-        (controller as any).handname = i == 0 ? "right" : "left";
+        (controller as any).handname = "";
         controller.add(line.clone());
         controller.userData.index = i;
         controller.userData.selectPressed = false;
