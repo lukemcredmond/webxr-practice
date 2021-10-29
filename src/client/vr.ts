@@ -42,7 +42,7 @@ class App {
   elapsedTime: any | undefined;
   strStates: string | undefined;
   ui: any;
-  CanvasMessage: string;
+  CanvasMessage: any;
 
   constructor() {
     const container = document.createElement("div");
@@ -295,9 +295,10 @@ class App {
 
     //reset camera's x rotation.
     this.dolly.rotateX(-x);
+    this.dolly.rotateX(-y);
 
     //rotate camera on y axis
-    this.dolly.rotateY(THREE.MathUtils.degToRad(-y));
+    this.dolly.rotateY(y+cleany);
 
     //check if we are trying to look to high or too low
     if (Math.abs(cleanx + x) > Math.PI / 2 - 0.05) this.dolly.rotateX(x);
@@ -368,7 +369,7 @@ class App {
       pos = this.dolly.getWorldPosition(this.xrScene.origin);
     }
 
-    this.CanvasMessage = JSON.stringify(this.dolly.position)+JSON.stringify(this.dolly.rotation);
+    this.CanvasMessage = { p: this.dolly.position, r : this.dolly.rotation};
       
 
     //cast left
