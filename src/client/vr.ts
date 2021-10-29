@@ -315,7 +315,7 @@ class App {
     if (this.buttonStates["left"] === undefined) return;
 
     const wallLimit = 1.3;
-    const speed = 1;
+    const speed = 0.79;
 
     let zdir = 0;
     let xdir = 0;
@@ -325,15 +325,15 @@ class App {
 
     Object.keys(this.buttonStates["left"]).forEach((key) => {
       if (key.indexOf("touchpad") != -1 || key.indexOf("thumbstick") != -1) {
-        xdir = this.buttonStates["left"][key]["xAxis"];
-        zdir = this.buttonStates["left"][key]["yAxis"];
+        xdir = parseFloat(this.buttonStates["left"][key]["xAxis"]);
+        zdir = parseFloat(this.buttonStates["left"][key]["yAxis"]);
       }
     });
 
     Object.keys(this.buttonStates["right"]).forEach((key) => {
       if (key.indexOf("touchpad") != -1 || key.indexOf("thumbstick") != -1) {
-        lookside = this.buttonStates["right"][key]["xAxis"];
-        lookup = this.buttonStates["right"][key]["yAxis"];
+        lookside = parseFloat(this.buttonStates["right"][key]["xAxis"]);
+        lookup = parseFloat(this.buttonStates["right"][key]["yAxis"]);
       }
     });
     this.rotateCamera(lookside,lookup);
@@ -393,14 +393,14 @@ class App {
     }
 
     //cast down
-    dir.set(0, -1, 0);
-    pos.y += 1.5;
-    this.xrScene.raycaster.set(pos, dir);
+    //dir.set(0, -1, 0);
+    //pos.y += 1.5;
+    //this.xrScene.raycaster.set(pos, dir);
 
-    intersect = this.xrScene.raycaster.intersectObject(this.proxy);
-    if (intersect.length > 0) {
-      this.dolly.position.copy(intersect[0].point);
-    }
+    //intersect = this.xrScene.raycaster.intersectObject(this.proxy);
+    //if (intersect.length > 0) {
+    //  this.dolly.position.copy(intersect[0].point);
+    //}
 
     //Restore the original rotation
     this.dolly.quaternion.copy(quaternion);
