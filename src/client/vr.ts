@@ -291,12 +291,13 @@ class App {
     let cleany = parseFloat(dy);
     //store previous x rotation
     var x = this.dolly.rotation.x;
+    var y = this.dolly.rotation.y;
 
     //reset camera's x rotation.
     this.dolly.rotateX(-x);
 
     //rotate camera on y axis
-    this.dolly.rotateY(cleany);
+    this.dolly.rotateY(THREE.MathUtils.degToRad(-y));
 
     //check if we are trying to look to high or too low
     if (Math.abs(cleanx + x) > Math.PI / 2 - 0.05) this.dolly.rotateX(x);
@@ -316,7 +317,7 @@ class App {
     if (this.buttonStates["left"] === undefined) return;
 
     const wallLimit = 1.3;
-    const speed = 0.79;
+    const speed = 0.2;
 
     let zdir = 0;
     let xdir = 0;
@@ -356,18 +357,19 @@ class App {
     let blocked = false;
 
     let intersect = this.xrScene.raycaster.intersectObject(this.proxy);
-    if (intersect.length > 0) {
-      if (intersect[0].distance < wallLimit) blocked = true;
-    }
+    // if (intersect.length > 0) {
+    //   if (intersect[0].distance < wallLimit) blocked = true;
+    // }
 
     if (!blocked) {
       this.dolly.translateZ(zdir * speed);
       this.dolly.translateX(xdir * speed);
+      this.dolly.position.y = 1;
       pos = this.dolly.getWorldPosition(this.xrScene.origin);
     }
 
-    this.CanvasMessage =
-      (blocked ? "blocked" : "not blocked") + " zdir=" + zdir + " xdir=" + xdir;
+    this.CanvasMessage = JSON.stringify(this.dolly.position)+JSON.stringify(this.dolly.rotation);
+      
 
     //cast left
     dir.set(-1, 0, 0);
