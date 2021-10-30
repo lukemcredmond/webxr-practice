@@ -346,7 +346,7 @@ class App {
         lookup = parseFloat(this.buttonStates["right"][key]["yAxis"]);
       }
     });
-    this.rotateCamera(lookside, lookup);
+    this.rotateCamera(lookup,lookside);
 
     let pos = this.dolly.position.clone();
     pos.y += 1;
