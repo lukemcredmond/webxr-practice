@@ -297,17 +297,17 @@ class App {
     var y = this.dolly.rotation.y;
 
     //reset camera's x rotation.
-    this.dolly.rotateX(-x);
+    //this.dolly.rotateX(-x);
     //this.dolly.rotateY(-y);
 
     //rotate camera on y axis
     //this.dolly.rotateY(y+cleany);
 
     //check if we are trying to look to high or too low
-    if (Math.abs(cleanx + x) > Math.PI / 2 - 0.05) 
-      this.dolly.rotateX(x);
-    else 
-      this.dolly.rotateX(x + cleanx);
+    // if (Math.abs(cleanx + x) > Math.PI / 2 - 0.05) 
+    //   this.dolly.rotateX(x);
+    // else 
+    //   this.dolly.rotateX(x + cleanx);
 
     if (Math.abs(cleany + y) > Math.PI / 2 - 0.05) 
       this.dolly.rotateY(y);
