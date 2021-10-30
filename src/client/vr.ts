@@ -463,7 +463,7 @@ class App {
     const str = "";//JSON.stringify(this.buttonStates);
     const message = JSON.stringify(this.CanvasMessage);
     if (this.strStates === undefined || str != this.strStates) {
-      this.ui.updateElement("body", str);
+      this.ui.updateElement("body", str + message);
       this.ui.update();
       this.strStates = str + message;
     }
