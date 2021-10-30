@@ -316,6 +316,8 @@ class App {
 
     //reset z rotation. Floating point operations might change z rotation during the above operations.
     this.dolly.rotation.z = 0;
+
+    console.log(this.dolly.rotation);
   }
 
   handleController(controllers: any) {
