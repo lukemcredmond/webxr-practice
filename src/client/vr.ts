@@ -287,6 +287,9 @@ class App {
     if (this === undefined) return;
     if (this.dolly === undefined) return;
 
+
+    console.log(this.dolly.rotation);
+
     let cleanx = parseFloat(dx);
     let cleany = parseFloat(dy);
     //store previous x rotation
@@ -295,7 +298,7 @@ class App {
 
     //reset camera's x rotation.
     this.dolly.rotateX(-x);
-    this.dolly.rotateY(-y);
+    //this.dolly.rotateY(-y);
 
     //rotate camera on y axis
     //this.dolly.rotateY(y+cleany);
