@@ -669,6 +669,12 @@ class App {
         //   }
         // }
 
+
+
+        if (this.controllers) {
+          self.handleController(this.controllers);
+        }
+
         if (this.elapsedTime === undefined) this.elapsedTime = 0;
         this.elapsedTime += dt;
         if (this.elapsedTime > 0.3) {
@@ -676,9 +682,7 @@ class App {
           this.elapsedTime = 0;
         }
 
-        if (this.controllers) {
-          self.handleController(this.controllers);
-        }
+        
       }
     }
 
