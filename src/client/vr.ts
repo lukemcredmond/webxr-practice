@@ -297,8 +297,8 @@ class App {
     var y = this.dolly.rotation.y;
 
     //reset camera's x rotation.
-    //this.dolly.rotateX(-x);
-    //this.dolly.rotateY(-y);
+    this.dolly.rotateX(-x);
+    this.dolly.rotateY(-y);
 
     //rotate camera on y axis
     //this.dolly.rotateY(y+cleany);
@@ -309,10 +309,10 @@ class App {
     else 
       this.dolly.rotateX(x + cleanx);
 
-    //if (Math.abs(cleany + y) > Math.PI / 2 - 0.05) 
+    if (Math.abs(cleany + y) > Math.PI / 2 - 0.05) 
       this.dolly.rotateY(y);
-    //else 
-     // this.dolly.rotateY(y + cleany);
+    else 
+      this.dolly.rotateY(y + cleany);
 
     //reset z rotation. Floating point operations might change z rotation during the above operations.
     this.dolly.rotation.z = 0;
