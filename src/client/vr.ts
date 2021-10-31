@@ -351,7 +351,7 @@ class App {
         lookup = parseFloat(this.buttonStates["right"][key]["yAxis"]);
       }
     });
-    this.rotateCamera(lookup,lookside);
+    
 
     let pos = this.dolly.position.clone();
     pos.y += 1;
@@ -381,7 +381,7 @@ class App {
       pos = this.dolly.getWorldPosition(this.xrScene.origin);
     }
 
-    this.CanvasMessage = { p: this.dolly.position, r : this.dolly.rotation};
+    
       
 
     //cast left
@@ -420,6 +420,8 @@ class App {
 
     //Restore the original rotation
     this.dolly.quaternion.copy(quaternion);
+    this.rotateCamera(lookup,lookside);
+    this.CanvasMessage = { p: this.dolly.position, r : this.dolly.rotation};
   }
   updateGamepadState() {
     const session = this.xrScene.Renderer.xr.getSession();
