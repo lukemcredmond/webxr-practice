@@ -304,15 +304,15 @@ class App {
     //this.dolly.rotateY(y+cleany);
 
     //check if we are trying to look to high or too low
-    // if (Math.abs(cleanx + x) > Math.PI / 2 - 0.05) 
-    //   this.dolly.rotateX(x);
-    // else 
-    //   this.dolly.rotateX(x + cleanx);
-
-    if (Math.abs(cleany + y) > Math.PI / 2 - 0.05) 
-      this.dolly.rotateY(y);
+    if (Math.abs(cleanx + x) > Math.PI / 2 - 0.05) 
+      this.dolly.rotateX(x);
     else 
-      this.dolly.rotateY(y + cleany);
+      this.dolly.rotateX(x + cleanx);
+
+    //if (Math.abs(cleany + y) > Math.PI / 2 - 0.05) 
+      this.dolly.rotateY(y);
+    //else 
+     // this.dolly.rotateY(y + cleany);
 
     //reset z rotation. Floating point operations might change z rotation during the above operations.
     this.dolly.rotation.z = 0;
@@ -661,13 +661,13 @@ class App {
     if (this.xrScene.Renderer.xr.isPresenting) {
       let moveGaze = false;
       if (this.dolly) {
-        if (this.useGaze && this.gazeController !== undefined) {
-          this.gazeController.update();
-          moveGaze = this.gazeController.mode == GazeController.Modes.MOVE;
-          if (moveGaze) {
-            this.moveDolly(dt);
-          }
-        }
+        // if (this.useGaze && this.gazeController !== undefined) {
+        //   this.gazeController.update();
+        //   moveGaze = this.gazeController.mode == GazeController.Modes.MOVE;
+        //   if (moveGaze) {
+        //     this.moveDolly(dt);
+        //   }
+        // }
 
         if (this.elapsedTime === undefined) this.elapsedTime = 0;
         this.elapsedTime += dt;
