@@ -309,9 +309,7 @@ class App {
     else 
       this.dolly.rotateX(x + cleanx);
 
-    if (Math.abs(cleany + y) > Math.PI / 2 - 0.05) 
-      this.dolly.rotateY(y);
-    else 
+    if (!(Math.abs(cleany + y) > Math.PI / 2 - 0.05))
       this.dolly.rotateY(y + cleany);
 
     //reset z rotation. Floating point operations might change z rotation during the above operations.
@@ -322,6 +320,7 @@ class App {
 
   handleController(controllers: any) {
     if (this.proxy === undefined) return;
+    
     if (this.dolly === undefined) return;
     if (this.dummyCam === undefined) return;
     if (this.xrScene.workingQuaternion === undefined) return;
