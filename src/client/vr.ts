@@ -295,7 +295,7 @@ class App {
     let cleany = parseFloat(dy);
     //store previous x rotation
     var x = this.dolly.rotation.x;
-    var y = this.dolly.rotation.y;
+    var y = this.xrScene.Camera.rotation.y; //y;
 
     //reset camera's x rotation.
     this.dolly.rotateX(-x);
@@ -311,7 +311,7 @@ class App {
       this.dolly.rotateX(x + cleanx);
 
     if (!(Math.abs(cleany + y) > Math.PI / 2 - 0.05))
-      this.dolly.rotateY((y + cleany) * -1);
+    this.xrScene.Camera.rotateY((y + cleany) * -1);
 
     //reset z rotation. Floating point operations might change z rotation during the above operations.
     this.dolly.rotation.z = 0;
