@@ -95,8 +95,9 @@ class App {
     this.dolly.position.set(0, 1, 10);
     this.dolly.add(this.xrScene.Camera);
     this.dummyCam = new THREE.Object3D();
-
+    const axesHelper = new THREE.AxesHelper( 10 );
     this.xrScene.Camera.add(this.dummyCam);
+    this.dolly.add(axesHelper);
     this.xrScene.Scene.add(this.dolly);
   }
 
@@ -310,7 +311,7 @@ class App {
       this.dolly.rotateX(x + cleanx);
 
     if (!(Math.abs(cleany + y) > Math.PI / 2 - 0.05))
-      this.dolly.rotateY(y + cleany);
+      this.dolly.rotateY((y + cleany) * -1);
 
     //reset z rotation. Floating point operations might change z rotation during the above operations.
     this.dolly.rotation.z = 0;
@@ -320,7 +321,7 @@ class App {
 
   handleController(controllers: any) {
     if (this.proxy === undefined) return;
-    
+
     if (this.dolly === undefined) return;
     if (this.dummyCam === undefined) return;
     if (this.xrScene.workingQuaternion === undefined) return;
