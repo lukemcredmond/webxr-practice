@@ -14,6 +14,7 @@ import {
 } from "@webxr-input-profiles/motion-controllers/dist/motion-controllers.module.js";
 import { CanvasUI } from "./utils/CanvasUI";
 
+
 const DEFAULT_PROFILES_PATH =
   "https://cdn.jsdelivr.net/npm/@webxr-input-profiles/assets@1.0/dist/profiles";
 const DEFAULT_PROFILE = "generic-trigger";
@@ -43,12 +44,15 @@ class App {
   strStates: string | undefined;
   ui: any;
   CanvasMessage: any;
+  euler: THREE.Euler;
+  rotationSpeed: number;
 
   constructor() {
     const container = document.createElement("div");
     this.CanvasMessage = "";
     document.body.appendChild(container);
-
+    this.euler = new THREE.Euler(0, 0, 0, 'YXZ');
+    this.rotationSpeed = Math.PI / 180;
     this.assetsPath = "../assets/waiting_room/";
 
     const rendererParms = { antialias: true };
@@ -95,9 +99,9 @@ class App {
     this.dolly.position.set(0, 1, 10);
     this.dolly.add(this.xrScene.Camera);
     this.dummyCam = new THREE.Object3D();
-    const axesHelper = new THREE.AxesHelper( 10 );
+    //const axesHelper = new THREE.AxesHelper( 10 );
     this.xrScene.Camera.add(this.dummyCam);
-    this.dolly.add(axesHelper);
+    //this.dolly.add(axesHelper);
     this.xrScene.Scene.add(this.dolly);
   }
 
@@ -284,39 +288,26 @@ class App {
   //this.buttonStates[handname][key].yAxis =gamepad.axes[yAxisIndex].toFixed(2);
 
   // Rotate camera Fps style
-  rotateCamera(dx: any, dy: any) {
+  rotateCamera(dx: any, dy: any) {//updown,leftright
     if (this === undefined) return;
     if (this.dolly === undefined) return;
+    if (this.dummyCam=== undefined) return;
+    var x = this.xrScene.Camera.rotation.x;
+    var y = this.xrScene.Camera.rotation.y; //y;
 
-
-    console.log(this.dolly.rotation);
+    //console.log(this.dolly.rotation);
 
     let cleanx = parseFloat(dx);
     let cleany = parseFloat(dy);
-    //store previous x rotation
-    var x = this.dolly.rotation.x;
-    var y = this.xrScene.Camera.rotation.y; //y;
+    
+    const movementX = cleanx || 0;
+    const movementY = cleany || 0;
 
-    //reset camera's x rotation.
-    this.dolly.rotateX(-x);
-    this.dolly.rotateY(-y);
+    this.euler.y -= movementX * this.rotationSpeed;
+    this.euler.x -= movementY * this.rotationSpeed;
+    this.euler.x = Math.min(Math.max(this.euler.x, -1.0472), 1.0472);
 
-    //rotate camera on y axis
-    //this.dolly.rotateY(y+cleany);
-
-    //check if we are trying to look to high or too low
-    if (Math.abs(cleanx + x) > Math.PI / 2 - 0.05) 
-      this.dolly.rotateX(x);
-    else 
-      this.dolly.rotateX(x + cleanx);
-
-    if (!(Math.abs(cleany + y) > Math.PI / 2 - 0.05))
-    this.xrScene.Camera.rotateY((y + cleany) * -1);
-
-    //reset z rotation. Floating point operations might change z rotation during the above operations.
-    this.dolly.rotation.z = 0;
-
-    console.log(this.dolly.rotation);
+    this.xrScene.Camera.quaternion.setFromEuler(this.euler);
   }
 
   handleController(controllers: any) {
