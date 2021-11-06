@@ -83,7 +83,8 @@ class App {
         window.innerWidth / window.innerHeight,
         0.01,
         500
-      )
+      ),
+      { UseOrbitControls: false }
     );
     this.xrScene.Camera.position.set(0, 1.6, 0); //cannot be over written
 
@@ -292,22 +293,13 @@ class App {
     if (this === undefined) return;
     if (this.dolly === undefined) return;
     if (this.dummyCam=== undefined) return;
-    var x = this.xrScene.Camera.rotation.x;
-    var y = this.xrScene.Camera.rotation.y; //y;
-
-    //console.log(this.dolly.rotation);
-
-    let cleanx = parseFloat(dx);
-    let cleany = parseFloat(dy);
     
-    const movementX = cleanx || 0;
-    const movementY = cleany || 0;
 
-    this.euler.y -= movementX * this.rotationSpeed;
-    this.euler.x -= movementY * this.rotationSpeed;
-    this.euler.x = Math.min(Math.max(this.euler.x, -1.0472), 1.0472);
+    this.xrScene.Controls.rotate( dy * THREE.MathUtils.DEG2RAD * this.xrScene.Clock.getDelta(), 0, true );
+    this.xrScene.Controls.rotate( 0, dx * THREE.MathUtils.DEG2RAD * this.xrScene.Clock.getDelta(), true );
 
-    this.xrScene.Camera.quaternion.setFromEuler(this.euler);
+
+
   }
 
   handleController(controllers: any) {
@@ -649,6 +641,7 @@ class App {
   Render(timestamp: any, frame: any) {
     const dt = this.xrScene.Clock.getDelta();
     const self = this;
+    const updated = this.xrScene.Controls.update( dt );
     if (this.xrScene.Renderer.xr.isPresenting) {
       let moveGaze = false;
       if (this.dolly) {
