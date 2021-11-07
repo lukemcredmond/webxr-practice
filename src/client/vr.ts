@@ -295,23 +295,23 @@ class App {
     if (this.dummyCam === undefined) return;
 
     //store previous x rotation
-    var x = this.xrScene.Camera.rotation.x;
+    var x = this.xrScene.Scene.rotation.x;
 
     //reset camera's x rotation.
-    this.xrScene.Camera.rotateX(-x);
+    this.xrScene.Scene.rotateX(-x);
 
     //rotate camera on y axis
-    this.xrScene.Camera.rotateY(dy);
+    this.xrScene.Scene.rotateY(dy);
 
     //check if we are trying to look to high or too low
     if (Math.abs(dx + x) > Math.PI / 2 - 0.05) {
-      this.xrScene.Camera.rotateX(x);
+      this.xrScene.Scene.rotateX(x);
     } else {
-      this.xrScene.Camera.rotateX(x + dx);
+      this.xrScene.Scene.rotateX(x + dx);
     }
 
     //reset z rotation. Floating point operations might change z rotation during the above operations.
-    this.xrScene.Camera.rotation.z = 0;
+    this.xrScene.Scene.rotation.z = 0;
 
     //this.xrScene.Controls.rotate( dy * THREE.MathUtils.DEG2RAD * this.xrScene.Clock.getDelta(), 0, true );
     //this.xrScene.Controls.rotate( 0, dx * THREE.MathUtils.DEG2RAD * this.xrScene.Clock.getDelta(), true );
