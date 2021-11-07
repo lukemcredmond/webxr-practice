@@ -353,16 +353,16 @@ class App {
     let pos = this.dolly.position.clone();
     pos.y += 1;
 
-    let dir = new THREE.Vector3();
-    //Store original dolly rotation
-    const quaternion = this.dolly.quaternion.clone();
-    //Get rotation for movement from the headset pose
-    this.dolly.quaternion.copy(
-      this.dummyCam.getWorldQuaternion(this.xrScene.workingQuaternion)
-    );
-    this.dolly.getWorldDirection(dir);
-    dir.negate();
-    this.xrScene.raycaster.set(pos, dir);
+    // let dir = new THREE.Vector3();
+    // //Store original dolly rotation
+    // const quaternion = this.dolly.quaternion.clone();
+    // //Get rotation for movement from the headset pose
+    // this.dolly.quaternion.copy(
+    //   this.dummyCam.getWorldQuaternion(this.xrScene.workingQuaternion)
+    // );
+    // this.dolly.getWorldDirection(dir);
+    // dir.negate();
+    // this.xrScene.raycaster.set(pos, dir);
 
     let blocked = false;
 
@@ -378,29 +378,29 @@ class App {
       pos = this.dolly.getWorldPosition(this.xrScene.origin);
     }
 
-    //cast left
-    dir.set(-1, 0, 0);
-    dir.applyMatrix4(this.dolly.matrix);
-    dir.normalize();
-    this.xrScene.raycaster.set(pos, dir);
+    // cast left
+    // dir.set(-1, 0, 0);
+    // dir.applyMatrix4(this.dolly.matrix);
+    // dir.normalize();
+    // this.xrScene.raycaster.set(pos, dir);
 
-    intersect = this.xrScene.raycaster.intersectObject(this.proxy);
-    if (intersect.length > 0) {
-      if (intersect[0].distance < wallLimit)
-        this.dolly.translateX(wallLimit - intersect[0].distance);
-    }
+    // intersect = this.xrScene.raycaster.intersectObject(this.proxy);
+    // if (intersect.length > 0) {
+    //   if (intersect[0].distance < wallLimit)
+    //     this.dolly.translateX(wallLimit - intersect[0].distance);
+    // }
 
     //cast right
-    dir.set(1, 0, 0);
-    dir.applyMatrix4(this.dolly.matrix);
-    dir.normalize();
-    this.xrScene.raycaster.set(pos, dir);
+    // dir.set(1, 0, 0);
+    // dir.applyMatrix4(this.dolly.matrix);
+    // dir.normalize();
+    // this.xrScene.raycaster.set(pos, dir);
 
-    intersect = this.xrScene.raycaster.intersectObject(this.proxy);
-    if (intersect.length > 0) {
-      if (intersect[0].distance < wallLimit)
-        this.dolly.translateX(intersect[0].distance - wallLimit);
-    }
+    // intersect = this.xrScene.raycaster.intersectObject(this.proxy);
+    // if (intersect.length > 0) {
+    //   if (intersect[0].distance < wallLimit)
+    //     this.dolly.translateX(intersect[0].distance - wallLimit);
+    // }
 
     //cast down
     //dir.set(0, -1, 0);
@@ -413,7 +413,7 @@ class App {
     //}
 
     //Restore the original rotation
-    this.dolly.quaternion.copy(quaternion);
+    //this.dolly.quaternion.copy(quaternion);
     this.rotateCamera(lookup, lookside);
     this.CanvasMessage = { p: this.dolly.position, r: this.dolly.rotation };
   }
