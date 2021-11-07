@@ -2,9 +2,9 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { ARButton } from "./ARButton";
-import CameraControls from "camera-controls";
+// import CameraControls from "camera-controls";
 
-CameraControls.install({ THREE: THREE });
+// CameraControls.install({ THREE: THREE });
 
 export default class WebXRScene {
   public Camera: THREE.PerspectiveCamera;
@@ -43,20 +43,20 @@ export default class WebXRScene {
 
     sceneItems.forEach((item) => this.Scene.add(item));
 
-    if (parms.UseOrbitControls) {
+    // if (parms.UseOrbitControls) {
       this.Controls = new OrbitControls(this.Camera, this.Renderer.domElement);
       this.Controls.target.set(0, 3.5, 0);
       this.Controls.update();
-    } else {
-      this.Controls = new CameraControls(this.Camera, this.Renderer.domElement);
-      this.Controls.minDistance = this.Controls.maxDistance = 1;
-      this.Controls.azimuthRotateSpeed = -0.3; // negative value to invert rotation direction
-      this.Controls.polarRotateSpeed = -0.3; // negative value to invert rotation direction
-      this.Controls.truckSpeed = 10;
-      this.Controls.mouseButtons.wheel = CameraControls.ACTION.ZOOM;
-      this.Controls.touches.two = CameraControls.ACTION.TOUCH_ZOOM_TRUCK;
-      this.Controls.saveState();
-    }
+    // } else {
+    //   this.Controls = new CameraControls(this.Camera, this.Renderer.domElement);
+    //   this.Controls.minDistance = this.Controls.maxDistance = 1;
+    //   this.Controls.azimuthRotateSpeed = -0.3; // negative value to invert rotation direction
+    //   this.Controls.polarRotateSpeed = -0.3; // negative value to invert rotation direction
+    //   this.Controls.truckSpeed = 10;
+    //   this.Controls.mouseButtons.wheel = CameraControls.ACTION.ZOOM;
+    //   this.Controls.touches.two = CameraControls.ACTION.TOUCH_ZOOM_TRUCK;
+    //   this.Controls.saveState();
+    // }
 
     this.up = new THREE.Vector3(0, 1, 0);
     this.raycaster = new THREE.Raycaster();

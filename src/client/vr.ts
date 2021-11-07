@@ -14,7 +14,6 @@ import {
 } from "@webxr-input-profiles/motion-controllers/dist/motion-controllers.module.js";
 import { CanvasUI } from "./utils/CanvasUI";
 
-
 const DEFAULT_PROFILES_PATH =
   "https://cdn.jsdelivr.net/npm/@webxr-input-profiles/assets@1.0/dist/profiles";
 const DEFAULT_PROFILE = "generic-trigger";
@@ -51,7 +50,7 @@ class App {
     const container = document.createElement("div");
     this.CanvasMessage = "";
     document.body.appendChild(container);
-    this.euler = new THREE.Euler(0, 0, 0, 'YXZ');
+    this.euler = new THREE.Euler(0, 0, 0, "YXZ");
     this.rotationSpeed = Math.PI / 180;
     this.assetsPath = "../assets/waiting_room/";
 
@@ -84,7 +83,7 @@ class App {
         0.01,
         500
       ),
-      { UseOrbitControls: false }
+      { UseOrbitControls: true }
     );
     this.xrScene.Camera.position.set(0, 1.6, 0); //cannot be over written
 
@@ -289,17 +288,33 @@ class App {
   //this.buttonStates[handname][key].yAxis =gamepad.axes[yAxisIndex].toFixed(2);
 
   // Rotate camera Fps style
-  rotateCamera(dx: any, dy: any) {//updown,leftright
+  rotateCamera(dx: any, dy: any) {
+    //updown,leftright
     if (this === undefined) return;
     if (this.dolly === undefined) return;
-    if (this.dummyCam=== undefined) return;
-    
+    if (this.dummyCam === undefined) return;
 
-    this.xrScene.Controls.rotate( dy * THREE.MathUtils.DEG2RAD * this.xrScene.Clock.getDelta(), 0, true );
-    this.xrScene.Controls.rotate( 0, dx * THREE.MathUtils.DEG2RAD * this.xrScene.Clock.getDelta(), true );
+    //store previous x rotation
+    var x = this.xrScene.Camera.rotation.x;
 
+    //reset camera's x rotation.
+    this.xrScene.Camera.rotateX(-x);
 
+    //rotate camera on y axis
+    this.xrScene.Camera.rotateY(dy);
 
+    //check if we are trying to look to high or too low
+    if (Math.abs(dx + x) > Math.PI / 2 - 0.05) {
+      this.xrScene.Camera.rotateX(x);
+    } else {
+      this.xrScene.Camera.rotateX(x + dx);
+    }
+
+    //reset z rotation. Floating point operations might change z rotation during the above operations.
+    this.xrScene.Camera.rotation.z = 0;
+
+    //this.xrScene.Controls.rotate( dy * THREE.MathUtils.DEG2RAD * this.xrScene.Clock.getDelta(), 0, true );
+    //this.xrScene.Controls.rotate( 0, dx * THREE.MathUtils.DEG2RAD * this.xrScene.Clock.getDelta(), true );
   }
 
   handleController(controllers: any) {
@@ -334,7 +349,6 @@ class App {
         lookup = parseFloat(this.buttonStates["right"][key]["yAxis"]);
       }
     });
-    
 
     let pos = this.dolly.position.clone();
     pos.y += 1;
@@ -363,9 +377,6 @@ class App {
       this.dolly.position.y = 1;
       pos = this.dolly.getWorldPosition(this.xrScene.origin);
     }
-
-    
-      
 
     //cast left
     dir.set(-1, 0, 0);
@@ -403,8 +414,8 @@ class App {
 
     //Restore the original rotation
     this.dolly.quaternion.copy(quaternion);
-    this.rotateCamera(lookup,lookside);
-    this.CanvasMessage = { p: this.dolly.position, r : this.dolly.rotation};
+    this.rotateCamera(lookup, lookside);
+    this.CanvasMessage = { p: this.dolly.position, r: this.dolly.rotation };
   }
   updateGamepadState() {
     const session = this.xrScene.Renderer.xr.getSession();
@@ -454,7 +465,7 @@ class App {
     }
   }
   updateUI() {
-    const str = "";//JSON.stringify(this.buttonStates);
+    const str = ""; //JSON.stringify(this.buttonStates);
     const message = JSON.stringify(this.CanvasMessage);
     if (this.strStates === undefined || str != this.strStates) {
       this.ui.updateElement("body", str + message);
@@ -641,7 +652,7 @@ class App {
   Render(timestamp: any, frame: any) {
     const dt = this.xrScene.Clock.getDelta();
     const self = this;
-    const updated = this.xrScene.Controls.update( dt );
+    const updated = this.xrScene.Controls.update(dt);
     if (this.xrScene.Renderer.xr.isPresenting) {
       let moveGaze = false;
       if (this.dolly) {
@@ -653,8 +664,6 @@ class App {
         //   }
         // }
 
-
-
         if (this.controllers) {
           self.handleController(this.controllers);
         }
@@ -665,8 +674,6 @@ class App {
           this.updateGamepadState();
           this.elapsedTime = 0;
         }
-
-        
       }
     }
 
